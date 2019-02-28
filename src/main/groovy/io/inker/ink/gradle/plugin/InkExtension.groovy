@@ -1,4 +1,5 @@
-package io.inker.ink.gradle.task
+package io.inker.ink.gradle.plugin
+
 
 import io.inker.ink.gradle.type.BaseExtension
 import org.gradle.api.Project
@@ -7,7 +8,7 @@ class InkExtension extends BaseExtension {
     String disable          // 需disable的规则列表
     String enable           // 需enable的规则列表
     String check            // 指定扫描的规则列表
-    File lintConfig         // 规则列表配置文件
+    File inkConfig         // 规则列表配置文件
     File textOutput         // TextReporter
     File htmlOutput         // HtmlReporter
     File xmlOutput          // XmlReporter
@@ -31,20 +32,20 @@ class InkExtension extends BaseExtension {
         this.check = check
     }
 
-    void setLintConfig(String lintConfig) {
-        if (lintConfig != null && !lintConfig.isEmpty()) {
-            if (lintConfig.startsWith('http://') ||
-                    lintConfig.startsWith('https://') ||
-                    lintConfig.startsWith('ftp://')) {
-                this.lintConfig = FileUtils.downloadFile(lintConfig, project.buildDir.absolutePath)
+    void setInkConfig(String inkConfig) {
+        if (inkConfig != null && !inkConfig.isEmpty()) {
+            if (inkConfig.startsWith('http://') ||
+                    inkConfig.startsWith('https://') ||
+                    inkConfig.startsWith('ftp://')) {
+                this.inkConfig = FileUtils.downloadFile(inkConfig, project.buildDir.absolutePath)
             } else {
-                this.lintConfig = new File(lintConfig)
+                this.inkConfig = new File(inkConfig)
             }
         }
     }
 
-    void setLintConfig(File lintConfig) {
-        this.lintConfig = lintConfig
+    void setInkConfig(File inkConfig) {
+        this.inkConfig = inkConfig
     }
 
     void setTextOutput(String textOutput) {
@@ -85,5 +86,9 @@ class InkExtension extends BaseExtension {
                 this.customRules.add(customRule)
             }
         }
+    }
+
+    void setQuiet(boolean quiet) {
+        this.quiet = quiet
     }
 }
