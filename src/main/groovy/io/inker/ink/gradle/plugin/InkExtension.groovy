@@ -1,35 +1,153 @@
 package io.inker.ink.gradle.plugin
 
-
 import io.inker.ink.gradle.type.BaseExtension
+import io.inker.ink.gradle.utils.FileUtils
 import org.gradle.api.Project
 
 class InkExtension extends BaseExtension {
-    String disable          // 需disable的规则列表
-    String enable           // 需enable的规则列表
-    String check            // 指定扫描的规则列表
-    File inkConfig         // 规则列表配置文件
-    File textOutput         // TextReporter
-    File htmlOutput         // HtmlReporter
-    File xmlOutput          // XmlReporter
-    Set<String> customRules = new HashSet<>()     // 自定义规则库Jar包列表
+    /**
+     * The list of disabled rules, separated by ','
+     * Note: It can override the config in {@link #inkConfig}
+     *
+     * Example:
+     * ink {
+     *     disable 'ConcurrentModificationException', 'ThreadPriority'
+     * }
+     */
+    String[] disable
 
-    boolean quiet = false
+    /**
+     * The list of enabled rules, separated by ','
+     * Note: It can override the config in {@link #inkConfig}
+     *
+     * Example:
+     * ink {
+     *     enable 'ConcurrentModificationException', 'ThreadPriority'
+     * }
+     */
+    String[] enable
+
+    /**
+     * The list of rules to be run, separated by ','
+     * Note: It can override other settings, such as {@link #disable}, {@link #enable} and {@link #inkConfig}.
+     * And ink will run only these specified rules.
+     *
+     * Example:
+     * ink {
+     *     check 'ConcurrentModificationException', 'ThreadPriority'
+     * }
+     */
+    String[] check
+
+    /**
+     * The rule configuration file
+     *
+     * Example:
+     * ink {
+     *     inkConfig file('inkConfig_test.xml')
+     * }
+     */
+    File inkConfig
+
+    /**
+     * true, enable text output
+     * false, disable
+     * Note: default setting is TRUE
+     *
+     * Example:
+     * ink {
+     *     textReport false
+     * }
+     */
+    boolean textReport
+    /**
+     * The text-format report file
+     *
+     * Example:
+     * ink {
+     *     textReport true
+     *     textReportFile 'ink-report.txt
+     *     textReportFile file('ink-report.txt')
+     * }
+     */
+    File textReportFile
+
+    /**
+     * true, enable html output
+     * false, disable
+     * Note: default setting is FALSE
+     *
+     * Example:
+     * ink {
+     *     htmlReport true
+     * }
+     */
+    boolean htmlReport
+    /**
+     * The html-format report file
+     *
+     * Example:
+     * ink {
+     *     htmlReport true
+     *     htmlReportFile 'ink-report.html'
+     *     htmlReportFile file('ink-report.html')
+     * }
+     */
+    File htmlReportFile
+
+    /**
+     * true, enable xml output
+     * false, disable
+     * Note: default setting is FALSE
+     *
+     * Example:
+     * ink {
+     *     xmlReport false
+     * }
+     */
+    boolean xmlReport
+    /**
+     * The xml-format report file
+     *
+     * Example:
+     * ink {
+     *     xmlReport true
+     *     xmlReportFile 'ink-report.xml'
+     *     xmlReportFile file('ink-report.xml')
+     * }
+     */
+    File xmlReportFile
+
+    /**
+     * The list of customized rules, each item is a .jar file, separated by ','
+     *
+     * Example:
+     * ink {
+     *     extendedRules file('rules1.jar'), file('rules2.jar')
+     * }
+     */
+    File[] extendedRules
+
+    /**
+     * true, enable quiet mode, only minor important logs will be outputted
+     * false, disable
+     * Note: default setting is FALSE
+     *
+     * Example:
+     * ink {
+     *     quiet false
+     * }
+     */
+    boolean quiet
 
     InkExtension(Project project) {
         super(project)
-    }
 
-    void setDisable(String disable) {
-        this.disable = disable
-    }
+        textReport = true
+        htmlReport = false
+        xmlReport = false
 
-    void setEnable(String enable) {
-        this.enable = enable
-    }
-
-    void setCheck(String check) {
-        this.check = check
+        quiet = false
     }
 
     void setInkConfig(String inkConfig) {
@@ -39,56 +157,42 @@ class InkExtension extends BaseExtension {
                     inkConfig.startsWith('ftp://')) {
                 this.inkConfig = FileUtils.downloadFile(inkConfig, project.buildDir.absolutePath)
             } else {
-                this.inkConfig = new File(inkConfig)
+                this.inkConfig = FileUtils.safeCreateFile(inkConfig)
             }
         }
     }
 
-    void setInkConfig(File inkConfig) {
-        this.inkConfig = inkConfig
+    void setTextReportFile(String textReportFile) {
+        this.textReportFile = FileUtils.safeCreateFile(textReportFile)
     }
 
-    void setTextOutput(String textOutput) {
-        this.textOutput = FileUtils.safeCreateFile(textOutput)
+    void setHtmlReportFile(String htmlReportFile) {
+        this.htmlReportFile = FileUtils.safeCreateFile(htmlReportFile)
     }
 
-    void setTextOutput(File textOutput) {
-        this.textOutput = textOutput
+    void setXmlReportFile(String xmlReportFile) {
+        this.xmlReportFile = FileUtils.safeCreateFile(xmlReportFile)
     }
 
-    void setHtmlOutput(String htmlOutput) {
-        this.htmlOutput = FileUtils.safeCreateFile(htmlOutput)
-    }
+    void setExtendedRules(String... extendedRules) {
+        if (extendedRules != null) {
+            ArrayList<File> extendedRuleList = new ArrayList<>()
 
-    void setHtmlOutput(File htmlOutput) {
-        this.htmlOutput = htmlOutput
-    }
-
-    void setXmlOutput(String xmlOutput) {
-        this.xmlOutput = FileUtils.safeCreateFile(xmlOutput)
-    }
-
-    void setXmlOutput(File xmlOutput) {
-        this.xmlOutput = xmlOutput
-    }
-
-    void setCustomRule(String customRule) {
-        if (customRule != null && !customRule.isEmpty()) {
             String downloadDir = project.projectDir.absolutePath + '/lint-jars'
-            if (customRule.startsWith('http://') ||
-                    customRule.startsWith('https://') ||
-                    customRule.startsWith('ftp://')) {
-                File customRuleFile = FileUtils.downloadFile(customRule, downloadDir)
-                if (customRuleFile != null) {
-                    this.customRules.add(customRuleFile.absolutePath)
+            extendedRules.each {
+                if (it.startsWith('http://') ||
+                        it.startsWith('https://') ||
+                        it.startsWith('ftp://')) {
+                    File extendedRuleFile = FileUtils.downloadFile(it, downloadDir)
+                    if (extendedRuleFile != null) {
+                        extendedRuleList.add(extendedRuleFile)
+                    }
+                } else {
+                    extendedRuleList.add(FileUtils.safeCreateFile(it))
                 }
-            } else {
-                this.customRules.add(customRule)
             }
-        }
-    }
 
-    void setQuiet(boolean quiet) {
-        this.quiet = quiet
+            this.extendedRules = extendedRuleList.toArray(this.extendedRules)
+        }
     }
 }

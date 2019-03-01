@@ -1,6 +1,5 @@
 package io.inker.ink.gradle.type
 
-
 import org.gradle.api.Project
 
 class BaseExtension {
