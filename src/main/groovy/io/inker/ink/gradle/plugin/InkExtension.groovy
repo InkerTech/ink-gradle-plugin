@@ -66,11 +66,10 @@ class InkExtension extends BaseExtension {
      * Example:
      * ink {
      *     textReport true
-     *     textReportFile 'ink-report.txt
-     *     textReportFile file('ink-report.txt')
+     *     textReportFile 'ink-report.txt'
      * }
      */
-    File textReportFile
+    String textReportFile
 
     /**
      * true, enable html output
@@ -90,10 +89,9 @@ class InkExtension extends BaseExtension {
      * ink {
      *     htmlReport true
      *     htmlReportFile 'ink-report.html'
-     *     htmlReportFile file('ink-report.html')
      * }
      */
-    File htmlReportFile
+    String htmlReportFile
 
     /**
      * true, enable xml output
@@ -113,10 +111,9 @@ class InkExtension extends BaseExtension {
      * ink {
      *     xmlReport true
      *     xmlReportFile 'ink-report.xml'
-     *     xmlReportFile file('ink-report.xml')
      * }
      */
-    File xmlReportFile
+    String xmlReportFile
 
     /**
      * The list of customized rules, each item is a .jar file, separated by ','
@@ -140,6 +137,16 @@ class InkExtension extends BaseExtension {
      */
     boolean quiet
 
+    /**
+     * Ink working directory
+     */
+    private String inkDir
+
+    /**
+     * Ink reports sub-directory
+     */
+    private String inkReportsDir
+
     InkExtension(Project project) {
         super(project)
 
@@ -148,51 +155,72 @@ class InkExtension extends BaseExtension {
         xmlReport = false
 
         quiet = false
+
+        inkDir = project.projectDir.absolutePath + File.separator + InkConstants.INK_DIR
+        inkReportsDir = inkDir + File.separator + InkConstants.INK_SUBDIR_REPORTS
     }
 
     void setInkConfig(String inkConfig) {
         if (inkConfig != null && !inkConfig.isEmpty()) {
-            if (inkConfig.startsWith('http://') ||
-                    inkConfig.startsWith('https://') ||
-                    inkConfig.startsWith('ftp://')) {
-                this.inkConfig = FileUtils.downloadFile(inkConfig, project.buildDir.absolutePath)
+            File file
+            if (FileUtils.isFileUrl(inkConfig)) {
+                file = FileUtils.downloadFile(inkConfig, inkDir + File.separator + InkConstants.INK_SUBDIR_CONFIG)
             } else {
-                this.inkConfig = FileUtils.safeCreateFile(inkConfig)
+                file = FileUtils.getFile(inkConfig)
+            }
+
+            if (file != null) {
+                this.inkConfig = file
             }
         }
     }
 
+    void setInkConfig(File inkConfig) {
+        if (inkConfig != null) {
+            this.inkConfig = inkConfig
+        }
+    }
+
     void setTextReportFile(String textReportFile) {
-        this.textReportFile = FileUtils.safeCreateFile(textReportFile)
+        if (textReportFile == null || textReportFile.isEmpty()) {
+            textReportFile = inkReportsDir + File.separator + project.name + '.txt'
+        }
+        this.textReportFile = textReportFile
     }
 
     void setHtmlReportFile(String htmlReportFile) {
-        this.htmlReportFile = FileUtils.safeCreateFile(htmlReportFile)
+        if (htmlReportFile == null || htmlReportFile.isEmpty()) {
+            htmlReportFile = inkReportsDir + File.separator + project.name + '.html'
+        }
+        this.htmlReportFile = htmlReportFile
     }
 
     void setXmlReportFile(String xmlReportFile) {
-        this.xmlReportFile = FileUtils.safeCreateFile(xmlReportFile)
+        if (xmlReportFile == null || xmlReportFile.isEmpty()) {
+            xmlReportFile = inkReportsDir + File.separator + project.name + '.xml'
+        }
+        this.xmlReportFile = xmlReportFile
     }
 
     void setExtendedRules(String... extendedRules) {
         if (extendedRules != null) {
             ArrayList<File> extendedRuleList = new ArrayList<>()
 
-            String downloadDir = project.projectDir.absolutePath + '/lint-jars'
+            String downloadDir = inkDir + File.separator + InkConstants.INK_SUBDIR_EXTENDED_RULES
             extendedRules.each {
-                if (it.startsWith('http://') ||
-                        it.startsWith('https://') ||
-                        it.startsWith('ftp://')) {
-                    File extendedRuleFile = FileUtils.downloadFile(it, downloadDir)
-                    if (extendedRuleFile != null) {
-                        extendedRuleList.add(extendedRuleFile)
-                    }
+                File extendedRuleFile
+                if (FileUtils.isFileUrl(it)) {
+                    extendedRuleFile = FileUtils.downloadFile(it, downloadDir)
                 } else {
-                    extendedRuleList.add(FileUtils.safeCreateFile(it))
+                    extendedRuleFile = FileUtils.getFile(it)
+                }
+
+                if (extendedRuleFile != null) {
+                    extendedRuleList.add(extendedRuleFile)
                 }
             }
 
-            this.extendedRules = extendedRuleList.toArray(this.extendedRules)
+            this.extendedRules = (File[])extendedRuleList.toArray()
         }
     }
 }

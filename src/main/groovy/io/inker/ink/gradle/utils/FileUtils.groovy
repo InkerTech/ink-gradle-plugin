@@ -2,71 +2,62 @@ package io.inker.ink.gradle.utils
 
 
 class FileUtils {
+    static boolean isFileUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return false
+        }
+
+        URL remoteUrl
+        try {
+            remoteUrl = new URL(url)
+        } catch (MalformedURLException e) {
+            remoteUrl = null
+        }
+        return remoteUrl != null
+    }
+
     static File downloadFile(String fileUrl, String localDir) {
-        File file = null
+        if (localDir == null || localDir.isEmpty()) {
+            localDir = "."
+        }
 
-        // Validate url format
-        if (fileUrl.startsWith('http://') ||
-                fileUrl.startsWith('https://') ||
-                fileUrl.startsWith('ftp://')) {
-            // Local config file
-            String dstFileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1, fileUrl.length())
-            dstFileName = localDir + File.separator + dstFileName
-            File dstFile = FileUtils.safeCreateFile(dstFileName)
+        URL remoteUrl = new URL(fileUrl)
+        String filename = remoteUrl.getPath()
+        int pos = filename.lastIndexOf('/')
+        if (pos > 0) {
+            filename = filename.substring(pos + 1)
+        }
+        File localFile = createFile(localDir + File.separator + filename)
 
-            if (dstFile != null) {
-                InputStream input = null
-                FileOutputStream output = null
-                try {
-                    // Remote url
-                    URL url = new URL(fileUrl)
-                    input = url.openStream()
-                    output = new FileOutputStream(dstFile)
-
-                    // Download contents
-                    byte[] buffer = new byte[1024 * 8]
-                    int count = 0
-                    while ((count = input.read(buffer)) > 0) {
-                        output.write(buffer, 0, count)
-                    }
-
-                    file = dstFile
-                } catch (Exception e) {
-                    // TODO
-                } finally {
-                    if (output != null) {
-                        output.close()
-                        output = null
-                    }
-                    if (input != null) {
-                        input.close()
-                        input = null
-                    }
-                }
+        remoteUrl.withInputStream { is->
+            localFile.withOutputStream { os->
+                new BufferedOutputStream(os) << is
             }
         }
 
-        return file
+        return localFile
     }
 
-    static void checkIntegrity(File file) {
-        if (file == null) {
-            return
-        }
-
-        File parent = file.getParentFile()
-        if (parent != null && !parent.exists()) {
-            parent.mkdirs()
-        }
-    }
-
-    static File safeCreateFile(String filename) {
+    static File createFile(String filename) {
         if (filename == null || filename.isEmpty()) {
             return null
         }
 
         File file = new File(filename)
-        checkIntegrity(file)
+        File parentFile = file.getParentFile()
+        if (parentFile && !parentFile.exists()) {
+            parentFile.mkdirs()
+        }
+        file.createNewFile()
         return file
+    }
+
+    static File getFile(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return null
+        }
+
+        File file = new File(filename)
+        return file.exists() ? file : null
     }
 }
