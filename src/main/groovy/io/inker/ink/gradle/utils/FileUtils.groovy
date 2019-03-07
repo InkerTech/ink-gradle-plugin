@@ -27,7 +27,7 @@ class FileUtils {
         if (pos > 0) {
             filename = filename.substring(pos + 1)
         }
-        File localFile = createFile(localDir + File.separator + filename)
+        File localFile = createFile("${localDir}/${filename}")
 
         remoteUrl.withInputStream { is->
             localFile.withOutputStream { os->

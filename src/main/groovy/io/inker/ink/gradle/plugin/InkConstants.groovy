@@ -2,8 +2,9 @@ package io.inker.ink.gradle.plugin
 
 
 class InkConstants {
+    /*********************** Project settings ***********************/
     /**
-     * The main directory of Ink analyzer
+     * The working directory of Ink analyzer
      */
     static String INK_DIR = 'ink'
 
@@ -21,4 +22,10 @@ class InkConstants {
      * The sub-directory of Ink's extended rule jars
      */
     static String INK_SUBDIR_EXTENDED_RULES = 'rules'
+
+    /*********************** Ink settings ***********************/
+    /**
+     * The home-directory property of Ink analyzer
+     */
+    static String INK_HOME = 'INK_HOME'
 }

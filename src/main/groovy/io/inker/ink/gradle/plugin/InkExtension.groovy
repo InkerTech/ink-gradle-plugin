@@ -6,6 +6,11 @@ import org.gradle.api.Project
 
 class InkExtension extends BaseExtension {
     /**
+     * The home directory of Ink analyzer
+     */
+    String inkHome
+
+    /**
      * The list of disabled rules, separated by ','
      * Note: It can override the config in {@link #inkConfig}
      *
@@ -156,15 +161,15 @@ class InkExtension extends BaseExtension {
 
         quiet = false
 
-        inkDir = project.projectDir.absolutePath + File.separator + InkConstants.INK_DIR
-        inkReportsDir = inkDir + File.separator + InkConstants.INK_SUBDIR_REPORTS
+        inkDir = "${project.projectDir.absolutePath}/${InkConstants.INK_DIR}"
+        inkReportsDir = "${inkDir}/${InkConstants.INK_SUBDIR_REPORTS}"
     }
 
     void setInkConfig(String inkConfig) {
         if (inkConfig != null && !inkConfig.isEmpty()) {
             File file
             if (FileUtils.isFileUrl(inkConfig)) {
-                file = FileUtils.downloadFile(inkConfig, inkDir + File.separator + InkConstants.INK_SUBDIR_CONFIG)
+                file = FileUtils.downloadFile(inkConfig, "${inkDir}/${InkConstants.INK_SUBDIR_CONFIG}")
             } else {
                 file = FileUtils.getFile(inkConfig)
             }
@@ -183,21 +188,21 @@ class InkExtension extends BaseExtension {
 
     void setTextReportFile(String textReportFile) {
         if (textReportFile == null || textReportFile.isEmpty()) {
-            textReportFile = inkReportsDir + File.separator + project.name + '.txt'
+            textReportFile = "${inkReportsDir}/${project.name}.txt"
         }
         this.textReportFile = textReportFile
     }
 
     void setHtmlReportFile(String htmlReportFile) {
         if (htmlReportFile == null || htmlReportFile.isEmpty()) {
-            htmlReportFile = inkReportsDir + File.separator + project.name + '.html'
+            htmlReportFile = "${inkReportsDir}/${project.name}.html"
         }
         this.htmlReportFile = htmlReportFile
     }
 
     void setXmlReportFile(String xmlReportFile) {
         if (xmlReportFile == null || xmlReportFile.isEmpty()) {
-            xmlReportFile = inkReportsDir + File.separator + project.name + '.xml'
+            xmlReportFile = "${inkReportsDir}/${project.name}.xml"
         }
         this.xmlReportFile = xmlReportFile
     }
@@ -206,7 +211,7 @@ class InkExtension extends BaseExtension {
         if (extendedRules != null) {
             ArrayList<File> extendedRuleList = new ArrayList<>()
 
-            String downloadDir = inkDir + File.separator + InkConstants.INK_SUBDIR_EXTENDED_RULES
+            String downloadDir = "${inkDir}/${InkConstants.INK_SUBDIR_EXTENDED_RULES}"
             extendedRules.each {
                 File extendedRuleFile
                 if (FileUtils.isFileUrl(it)) {
